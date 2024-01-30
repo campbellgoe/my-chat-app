@@ -10,19 +10,27 @@ const Home = () => {
 
   useEffect(() => {
     socket = io('http://localhost:3003');
-
-    socket.on('chat message', (msg) => {
-      setMessages((messages: string[]) => [...messages, msg]);
+    socket.on('chat message', (msgs: string[]) => {
+      setMessages(msgs);
     });
+    socket.on('messages', setMessages)
 
     return () => {
       socket.off('chat message');
     };
   }, []);
 
+  useEffect(() => {
+    setTimeout(() => {
+      if (typeof window != 'undefined') {
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+    },0)
+  }, [messages])
+
   const sendMessage = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (message) {
+    if (message && socket) {
       socket.emit('chat message', message);
       setMessage('');
     }
@@ -37,7 +45,7 @@ const Home = () => {
       </ul>
       <form onSubmit={sendMessage}>
         <input
-        className="mr-4"
+          className="mr-4"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           autoComplete="off"

@@ -1,6 +1,7 @@
 const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const { spawn } = require('node:child_process');
 const next = require('next');
 const rateLimit = require('express-rate-limit');
 
@@ -26,11 +27,17 @@ app.prepare().then(() => {
     }
   });
 
+  const messages = []
   io.on('connection', (socket) => {
-    console.log('a user connected');
-
+    console.log('a user connected', messages);
+    socket.emit('messages', messages)
     socket.on('chat message', (msg) => {
-      io.emit('chat message', msg);
+      
+      messages.push(msg)
+      if(messages.length > 64){
+        messages.shift()
+      }
+      io.emit('chat message', messages);
     });
 
     socket.on('disconnect', () => {
@@ -44,5 +51,20 @@ app.prepare().then(() => {
 
   httpServer.listen(port, () => {
     console.log(`> Ready on http://localhost:${port}`);
+    process.env.PORT = 3000
+    process.env.NODE_ENV = 'production'
+    const nextCmd = spawn('next', ['start']);
+
+    nextCmd.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+    
+    nextCmd.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+    });
+    
+    nextCmd.on('close', (code) => {
+      console.log(`child process exited with code ${code}`);
+    }); 
   });
 });
