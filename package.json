@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node --env-file=.env.server server.js",
+    "start": "node --env-file=.env.local server.js",
     "lint": "next lint"
   },
   "dependencies": {
